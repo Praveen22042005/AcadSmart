@@ -1,9 +1,8 @@
-// backend/server.js
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-
 const app = express();
 const port = process.env.PORT || 4000;
 
@@ -16,7 +15,6 @@ mongoose.connect('mongodb://localhost:27017/university-publications', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
-
 const connection = mongoose.connection;
 connection.once('open', () => {
   console.log('MongoDB database connection established successfully');
@@ -29,7 +27,7 @@ app.get('/', (req, res) => {
 
 // Routes
 const authRouter = require('./routes/auth');
-const publicationsRouter = require('./routes/publication');
+const publicationsRouter = require('./routes/publication'); // Ensure this is declared only once
 const facultyRouter = require('./routes/faculty');
 
 app.use('/auth', authRouter);

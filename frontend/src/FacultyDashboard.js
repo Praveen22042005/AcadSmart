@@ -1,6 +1,18 @@
-// FacultyDashboard.js
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 const FacultyDashboard = ({ faculty, onLogout }) => {
   const [publications, setPublications] = useState([]);
@@ -30,8 +42,22 @@ const FacultyDashboard = ({ faculty, onLogout }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState("all");
 
+  const [chartData, setChartData] = useState({
+    typesData: [],
+    yearsData: [],
+    journalsData: [],
+  });
+
+  // Colors for the charts
+  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
+
   useEffect(() => {
     const fetchPublications = async () => {
+      if (!faculty.email) {
+        console.error("Faculty email is not defined");
+        return;
+      }
+
       try {
         setLoading(true);
         setError(null);
@@ -45,26 +71,6 @@ const FacultyDashboard = ({ faculty, onLogout }) => {
           const pubs = response.data.publications;
           setPublications(pubs);
           setFilteredPublications(pubs);
-          const citations = pubs.map((p) => p.citations || 0);
-          const totalCitations = citations.reduce((a, b) => a + b, 0);
-
-          // Calculate h-index
-          const sortedCitations = [...citations].sort((a, b) => b - a);
-          let hIndex = 0;
-          for (let i = 0; i < sortedCitations.length; i++) {
-            if (sortedCitations[i] >= i + 1) hIndex = i + 1;
-            else break;
-          }
-
-          // Calculate i10-index
-          const i10Index = citations.filter((c) => c >= 10).length;
-
-          setStats({
-            totalPublications: pubs.length,
-            totalCitations,
-            hIndex,
-            i10Index,
-          });
         } else {
           setError("Failed to fetch publications");
         }
@@ -76,10 +82,78 @@ const FacultyDashboard = ({ faculty, onLogout }) => {
       }
     };
 
-    if (faculty.email) {
+    if (faculty && faculty.email) {
       fetchPublications();
     }
-  }, [faculty.email]);
+  }, [faculty]);
+
+  // Recalculate stats and chart data whenever publications change
+  useEffect(() => {
+    const publicationTypesCount = {};
+    const publicationYearsCount = {};
+    const publicationJournalsCount = {};
+    const citations = publications.map((p) => p.citations || 0);
+    let totalCitations = 0;
+
+    publications.forEach((pub) => {
+      // Count publication types
+      publicationTypesCount[pub.type] =
+        (publicationTypesCount[pub.type] || 0) + 1;
+      // Count publications per year
+      const year = pub.year;
+      publicationYearsCount[year] = (publicationYearsCount[year] || 0) + 1;
+      // Count publications by journal
+      if (pub.journal) {
+        publicationJournalsCount[pub.journal] =
+          (publicationJournalsCount[pub.journal] || 0) + 1;
+      }
+      // Total citations
+      totalCitations += pub.citations || 0;
+    });
+
+    // Calculate h-index
+    const sortedCitations = [...citations].sort((a, b) => b - a);
+    let hIndex = 0;
+    for (let i = 0; i < sortedCitations.length; i++) {
+      if (sortedCitations[i] >= i + 1) hIndex = i + 1;
+      else break;
+    }
+
+    // Calculate i10-index
+    const i10Index = citations.filter((c) => c >= 10).length;
+
+    setStats({
+      totalPublications: publications.length,
+      totalCitations,
+      hIndex,
+      i10Index,
+    });
+
+    // Prepare data for charts
+    const typesData = Object.keys(publicationTypesCount).map((type) => ({
+      name: type.charAt(0).toUpperCase() + type.slice(1),
+      value: publicationTypesCount[type],
+    }));
+
+    const yearsData = Object.keys(publicationYearsCount)
+      .map((year) => ({
+        year: year,
+        count: publicationYearsCount[year],
+      }))
+      .sort((a, b) => a.year - b.year);
+
+    // Prepare data for journals chart
+    let journalsData = Object.keys(publicationJournalsCount).map((journal) => ({
+      name: journal,
+      count: publicationJournalsCount[journal],
+    }));
+
+    // Sort and limit to top 10 journals
+    journalsData.sort((a, b) => b.count - a.count);
+    journalsData = journalsData.slice(0, 10);
+
+    setChartData({ typesData, yearsData, journalsData });
+  }, [publications]);
 
   useEffect(() => {
     // Update filtered publications when search query or filter type changes
@@ -116,6 +190,7 @@ const FacultyDashboard = ({ faculty, onLogout }) => {
 
       const publicationData = {
         ...newPublication,
+        facultyEmail: faculty.email,
         authors: authorsArray,
         year: Number(newPublication.year),
         citations: Number(newPublication.citations) || 0,
@@ -137,15 +212,6 @@ const FacultyDashboard = ({ faculty, onLogout }) => {
           const pubs = refreshResponse.data.publications;
           setPublications(pubs);
           setFilteredPublications(pubs);
-          setStats({
-            totalPublications: pubs.length,
-            totalCitations: pubs.reduce(
-              (sum, pub) => sum + (pub.citations || 0),
-              0
-            ),
-            hIndex: calculateHIndex(pubs),
-            i10Index: calculateI10Index(pubs),
-          });
         }
 
         // Clear form
@@ -189,6 +255,7 @@ const FacultyDashboard = ({ faculty, onLogout }) => {
 
       const updatedPublicationData = {
         ...editingPublication,
+        facultyEmail: faculty.email,
         authors: authorsArray,
         year: Number(editingPublication.year),
         citations: Number(editingPublication.citations) || 0,
@@ -210,15 +277,6 @@ const FacultyDashboard = ({ faculty, onLogout }) => {
           const pubs = refreshResponse.data.publications;
           setPublications(pubs);
           setFilteredPublications(pubs);
-          setStats({
-            totalPublications: pubs.length,
-            totalCitations: pubs.reduce(
-              (sum, pub) => sum + (pub.citations || 0),
-              0
-            ),
-            hIndex: calculateHIndex(pubs),
-            i10Index: calculateI10Index(pubs),
-          });
         }
 
         // Clear form
@@ -249,15 +307,6 @@ const FacultyDashboard = ({ faculty, onLogout }) => {
           const pubs = refreshResponse.data.publications;
           setPublications(pubs);
           setFilteredPublications(pubs);
-          setStats({
-            totalPublications: pubs.length,
-            totalCitations: pubs.reduce(
-              (sum, pub) => sum + (pub.citations || 0),
-              0
-            ),
-            hIndex: calculateHIndex(pubs),
-            i10Index: calculateI10Index(pubs),
-          });
         }
       } else {
         setError("Failed to delete publication");
@@ -266,21 +315,6 @@ const FacultyDashboard = ({ faculty, onLogout }) => {
       setError(err.message || "Failed to delete publication");
       console.error("Error deleting publication:", err);
     }
-  };
-
-  const calculateHIndex = (publications) => {
-    const citations = publications.map((p) => p.citations || 0);
-    const sortedCitations = [...citations].sort((a, b) => b - a);
-    let hIndex = 0;
-    for (let i = 0; i < sortedCitations.length; i++) {
-      if (sortedCitations[i] >= i + 1) hIndex = i + 1;
-      else break;
-    }
-    return hIndex;
-  };
-
-  const calculateI10Index = (publications) => {
-    return publications.filter((p) => (p.citations || 0) >= 10).length;
   };
 
   return (
@@ -377,6 +411,80 @@ const FacultyDashboard = ({ faculty, onLogout }) => {
                   </p>
                 </div>
               </div>
+
+              {/* Charts Section */}
+              <div className="grid grid-cols-2 gap-6">
+                {/* Pie Chart for Publication Types */}
+                <div className="bg-white p-6 rounded-lg shadow">
+                  <h2 className="text-xl font-bold mb-4">
+                    Publications by Type
+                  </h2>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={chartData.typesData}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        fill="#8884d8"
+                      >
+                        {chartData.typesData.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={COLORS[index % COLORS.length]}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Bar Chart for Publications over Years */}
+                <div className="bg-white p-6 rounded-lg shadow">
+                  <h2 className="text-xl font-bold mb-4">
+                    Publications over Years
+                  </h2>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={chartData.yearsData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="year" />
+                      <YAxis allowDecimals={false} />
+                      <Tooltip />
+                      <Legend />
+                      <Bar
+                        dataKey="count"
+                        fill="#82ca9d"
+                        name="Publications"
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Bar Chart for Publications by Journal */}
+                <div className="bg-white p-6 rounded-lg shadow col-span-2">
+                  <h2 className="text-xl font-bold mb-4">
+                    Publications by Journal
+                  </h2>
+                  <ResponsiveContainer width="100%" height={400}>
+                    <BarChart data={chartData.journalsData} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis type="number" allowDecimals={false} />
+                      <YAxis dataKey="name" type="category" width={150} />
+                      <Tooltip />
+                      <Legend />
+                      <Bar
+                        dataKey="count"
+                        fill="#8884d8"
+                        name="Publications"
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
             </>
           )}
 
@@ -452,9 +560,7 @@ const FacultyDashboard = ({ faculty, onLogout }) => {
                             Edit
                           </button>
                           <button
-                            onClick={() =>
-                              handleDeletePublication(pub._id)
-                            }
+                            onClick={() => handleDeletePublication(pub._id)}
                             className="text-sm text-red-600 hover:underline ml-4"
                           >
                             Delete
@@ -472,7 +578,9 @@ const FacultyDashboard = ({ faculty, onLogout }) => {
             <>
               {/* Add New Publication Form */}
               <div className="bg-white p-6 rounded-lg shadow">
-                <h2 className="text-xl font-bold mb-4">Add New Publication</h2>
+                <h2 className="text-xl font-bold mb-4">
+                  Add New Publication
+                </h2>
                 <form onSubmit={handleAddPublication}>
                   <div className="mb-4">
                     <label className="block text-gray-700">Type</label>

@@ -7,8 +7,9 @@ const facultySchema = new Schema({
   password: { type: String, required: true },
   firstName: { type: String },
   lastName: { type: String },
-  fullName: { type: String }, // Add this field
+  fullName: { type: String },
   email: { type: String },
+  googleScholarLink: { type: String },
   isProfileComplete: { type: Boolean, default: false },
 });
 

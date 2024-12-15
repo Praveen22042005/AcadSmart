@@ -1,6 +1,6 @@
-// frontend/src/components/UniversityDashboard.js
 import React, { useState } from "react";
 import axios from "axios";
+import { Link } from "react-router-dom";
 
 const UniversityDashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -27,33 +27,35 @@ const UniversityDashboard = () => {
     }
   };
 
-  // Handle faculty selection
-const handleSelectFaculty = async (name) => {
-  setLoading(true);
-  setError(null);
-  try {
-    const response = await axios.get(
-      `http://localhost:4000/faculty/search?name=${encodeURIComponent(name)}`
-    );
-    if (response.data.success) {
-      setFaculty(response.data.faculty);
-      setPublications(response.data.publications);
-      setSuggestions([]);
-      setSearchQuery(name);
-    } else {
-      setError('Faculty not found');
+  const handleSelectFaculty = async (name) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get(
+        `http://localhost:4000/faculty/search?name=${encodeURIComponent(name)}`
+      );
+      if (response.data.success) {
+        setFaculty(response.data.faculty);
+        setPublications(response.data.publications);
+        setSuggestions([]);
+        setSearchQuery(name);
+      } else {
+        setError('Faculty not found');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to fetch faculty details');
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    setError(err.response?.data?.message || 'Failed to fetch faculty details');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 font-sans">
       <header className="bg-blue-600 text-white p-4 flex justify-between items-center">
         <h1 className="text-2xl font-bold">University Dashboard</h1>
+        <Link to="/">
+          <button className="text-white hover:underline">Go Back</button>
+        </Link>
       </header>
 
       <main className="p-6">

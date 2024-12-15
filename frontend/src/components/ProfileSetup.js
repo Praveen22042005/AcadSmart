@@ -6,23 +6,36 @@ const ProfileSetup = ({ faculty, onProfileComplete }) => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [googleScholarLink, setGoogleScholarLink] = useState('');
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await axios.post('http://localhost:4000/auth/complete-profile', {
-        facultyId: faculty.facultyId,
-        firstName,
-        lastName,
-        email
-      });
-      if (response.data.success) {
-        onProfileComplete(response.data.faculty);
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  try {
+    const response = await axios.post('http://localhost:4000/auth/complete-profile', {
+      facultyId: faculty.facultyId,
+      firstName,
+      lastName,
+      email,
+      googleScholarLink,
+    });
+    if (response.data.success) {
+      const updatedFaculty = response.data.faculty;
+
+      // Fetch publications and update faculty data
+      const pubsResponse = await axios.get(
+        `http://localhost:4000/publications/fetch-scholar/${faculty.facultyId}`
+      );
+      if (pubsResponse.data.success) {
+        updatedFaculty.publications = pubsResponse.data.publications;
       }
-    } catch (error) {
-      alert(error.response?.data?.message || 'Profile update failed');
+
+      onProfileComplete(updatedFaculty);
     }
-  };
+  } catch (error) {
+    alert(error.response?.data?.message || 'Profile update failed');
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -56,6 +69,15 @@ const ProfileSetup = ({ faculty, onProfileComplete }) => {
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
+          <div className="mb-4">
+  <input
+    type="text"
+    placeholder="Google Scholar Profile Link"
+    className="w-full p-2 border rounded"
+    value={googleScholarLink}
+    onChange={(e) => setGoogleScholarLink(e.target.value)}
+  />
+</div>
           <button
             type="submit"
             className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"

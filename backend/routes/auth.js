@@ -69,13 +69,14 @@ router.post('/login', async (req, res) => {
 // Complete profile route
 router.post('/complete-profile', async (req, res) => {
   try {
-    const { facultyId, firstName, lastName, email } = req.body;
+    const { facultyId, firstName, lastName, email, googleScholarLink } = req.body; // Include googleScholarLink
     const faculty = await Faculty.findOneAndUpdate(
       { facultyId },
       { 
         firstName, 
         lastName, 
         email, 
+        googleScholarLink,
         isProfileComplete: true 
       },
       { new: true }

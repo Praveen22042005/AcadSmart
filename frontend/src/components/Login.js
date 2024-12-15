@@ -1,6 +1,6 @@
-// frontend/src/components/Login.js
 import React, { useState } from 'react';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
 
 const Login = ({ onLogin }) => {
   const [facultyId, setFacultyId] = useState('');
@@ -13,15 +13,22 @@ const Login = ({ onLogin }) => {
     try {
       const response = await axios.post('http://localhost:4000/auth/login', {
         facultyId,
-        password
+        password,
       });
       if (response.data.success) {
         const faculty = response.data.faculty;
-        const publicationsResponse = await axios.get(`http://localhost:4000/publications/fetch/${encodeURIComponent(faculty.email)}`);
-        if (publicationsResponse.data.success) {
-          faculty.publications = publicationsResponse.data.publications;
+
+        // Ensure faculty.email is defined before fetching publications
+        if (faculty.email) {
+          // Fetch publications
+          await axios.get(
+            `http://localhost:4000/publications/fetch/${encodeURIComponent(faculty.email)}`
+          );
         }
+
         onLogin(faculty);
+      } else {
+        alert('Login failed');
       }
     } catch (error) {
       alert(error.response?.data?.message || 'Login failed');
@@ -122,6 +129,11 @@ const Login = ({ onLogin }) => {
         >
           {showRegister ? 'Back to Login' : 'Need to Register?'}
         </button>
+        <Link to="/">
+          <button className="w-full mt-4 text-blue-600 hover:underline">
+            Go Back
+          </button>
+        </Link>
       </div>
     </div>
   );
