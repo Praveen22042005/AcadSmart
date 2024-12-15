@@ -48,4 +48,8 @@ AcadSmart is an academic management system designed to streamline the process of
 ### Prerequisites
 - Node.js (v14 or higher)
 - MongoDB
+<<<<<<< HEAD
 - npm or yarn
+=======
+- npm or yarn
+>>>>>>> f80bbf2920e74f793f9aeb957dac769ee26f6251
