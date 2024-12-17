@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import defaultAvatar from './assets/default-avatar.png';
 import axios from "axios";
 import {
   PieChart,
@@ -14,7 +15,13 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const FacultyDashboard = ({ faculty, onLogout }) => {
+// Importing custom icons
+import { ReactComponent as PublicationsIcon } from "./icons/publications.svg";
+import { ReactComponent as CitationsIcon } from "./icons/citations.svg";
+import { ReactComponent as HIndexIcon } from "./icons/hindex.svg";
+import { ReactComponent as I10IndexIcon } from "./icons/i10index.svg";
+
+const FacultyDashboard = ({ faculty, onLogout, onProfileUpdate }) => {
   const [publications, setPublications] = useState([]);
   const [filteredPublications, setFilteredPublications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +54,27 @@ const FacultyDashboard = ({ faculty, onLogout }) => {
     yearsData: [],
     journalsData: [],
   });
+
+  // Updated state for profile editing
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [profileData, setProfileData] = useState({
+    profilePhoto: defaultAvatar,
+    firstName: '',
+    lastName: '',
+    email: '',
+  });
+
+ // Update useEffect
+useEffect(() => {
+  if (faculty) {
+    setProfileData({
+      profilePhoto: faculty.profilePhoto || '',
+      firstName: faculty.firstName || '',
+      lastName: faculty.lastName || '',
+      email: faculty.email || '',
+    });
+  }
+}, [faculty]);
 
   // Colors for the charts
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
@@ -317,23 +345,126 @@ const FacultyDashboard = ({ faculty, onLogout }) => {
     }
   };
 
+  // Handle profile editing
+  const handleProfilePhotoChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64String = reader.result;
+        try {
+          const response = await axios.put(
+            `http://localhost:4000/faculty/update/${faculty._id}`,
+            {
+              ...profileData,
+              profilePhoto: base64String
+            }
+          );
+          
+          if (response.data.success) {
+            setProfileData({
+              ...profileData,
+              profilePhoto: base64String
+            });
+            if (onProfileUpdate) {
+              onProfileUpdate(response.data.faculty);
+            }
+          }
+        } catch (err) {
+          console.error('Error uploading photo:', err);
+          setError('Failed to upload photo');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Add the missing handleProfileUpdate function
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.put(
+        `http://localhost:4000/faculty/update/${faculty._id}`,
+        profileData
+      );
+      if (response.data.success) {
+        setShowEditProfile(false);
+        if (onProfileUpdate) {
+          onProfileUpdate(response.data.faculty);
+        }
+      } else {
+        setError("Failed to update profile");
+      }
+    } catch (err) {
+      setError(err.message || "Failed to update profile");
+      console.error("Error updating profile:", err);
+    }
+  };
+
+  const [profileURL, setProfileURL] = useState("");
+  const [showURLModal, setShowURLModal] = useState(false);
+
+  const handleGenerateProfileURL = async () => {
+    try {
+      const response = await axios.post('http://localhost:4000/faculty/generate-profile-url', {
+        facultyId: faculty.facultyId,
+      });
+      if (response.data.success) {
+        setProfileURL(response.data.profileURL);
+        setShowURLModal(true);
+      } else {
+        alert('Failed to generate profile URL');
+      }
+    } catch (error) {
+      console.error('Error generating profile URL:', error);
+      alert('Error generating profile URL');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 font-sans">
       {/* Header */}
       <header className="bg-blue-600 text-white p-4 flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold">
-            Welcome, {faculty.firstName} {faculty.lastName}!
+          <h1 className="text-3xl font-bold">
+            AcadSmart
           </h1>
-          <p className="text-sm">{faculty.email}</p>
+        </div>
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={handleGenerateProfileURL}
+            className="bg-blue-900 hover:bg-green-600 text-white font-semibold px-4 py-2 rounded"
+          >
+            Generate Profile URL
+          </button>
         </div>
       </header>
 
       <div className="flex">
         {/* Sidebar */}
         <aside className="w-1/5 bg-blue-800 text-white p-4 space-y-6">
+          {/* Profile Section */}
+          <div className="text-center">
+  <img
+    src={profileData.profilePhoto || defaultAvatar}
+    alt="Profile"
+    className="w-24 h-24 rounded-full mx-auto mb-2 object-cover"
+  />
+  <h2 className="text-lg font-semibold">
+    {profileData.firstName} {profileData.lastName}
+  </h2>
+  <p className="text-sm">{profileData.email}</p>
+  <button
+    onClick={() => setShowEditProfile(true)}
+    className="mt-2 bg-blue-600 text-white p-1 rounded hover:bg-blue-700 text-sm"
+  >
+    Edit Profile
+  </button>
+</div>
+
+          {/* Navigation */}
           <nav>
-            <ul className="space-y-4">
+            <ul className="space-y-4 mt-6">
               <li
                 className={`hover:bg-blue-700 p-2 rounded cursor-pointer ${
                   activeSection === "dashboard" ? "bg-blue-700" : ""
@@ -370,7 +501,7 @@ const FacultyDashboard = ({ faculty, onLogout }) => {
           </nav>
           <button
             onClick={handleLogout}
-            className="w-full bg-red-600 text-white p-2 rounded hover:bg-red-700"
+            className="w-full bg-red-600 text-white p-2 rounded hover:bg-red-700 mt-6"
           >
             Logout
           </button>
@@ -382,44 +513,71 @@ const FacultyDashboard = ({ faculty, onLogout }) => {
             <>
               {/* Stats Cards */}
               <div className="grid grid-cols-4 gap-4 mb-6">
-                <div className="bg-white p-4 rounded-lg shadow">
-                  <h3 className="text-gray-700 font-semibold">
-                    Total Publications
-                  </h3>
-                  <p className="text-2xl font-bold text-blue-600">
-                    {stats.totalPublications}
-                  </p>
+                <div className="bg-white p-4 rounded-lg shadow flex items-center">
+                  <div className="mr-4">
+                    {/* Icon for Total Publications */}
+                    <PublicationsIcon className="w-12 h-12 text-blue-500" />
+                  </div>
+                  <div>
+                    <h3 className="text-gray-700 font-bold">
+                      Total Publications
+                    </h3>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {stats.totalPublications}
+                    </p>
+                  </div>
                 </div>
-                <div className="bg-white p-4 rounded-lg shadow">
-                  <h3 className="text-gray-700 font-semibold">
-                    Total Citations
-                  </h3>
-                  <p className="text-2xl font-bold text-blue-600">
-                    {stats.totalCitations}
-                  </p>
+
+                <div className="bg-white p-4 rounded-lg shadow flex items-center">
+                  <div className="mr-4">
+                    {/* Icon for Total Citations */}
+                    <CitationsIcon className="w-12 h-12 text-green-500" />
+                  </div>
+                  <div>
+                    <h3 className="text-gray-700 font-bold">
+                      Total Citations
+                    </h3>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {stats.totalCitations}
+                    </p>
+                  </div>
                 </div>
-                <div className="bg-white p-4 rounded-lg shadow">
-                  <h3 className="text-gray-700 font-semibold">h-index</h3>
-                  <p className="text-2xl font-bold text-blue-600">
-                    {stats.hIndex}
-                  </p>
+
+                <div className="bg-white p-4 rounded-lg shadow flex items-center">
+                  <div className="mr-4">
+                    {/* Icon for h-index */}
+                    <HIndexIcon className="w-12 h-12 text-yellow-500" />
+                  </div>
+                  <div>
+                    <h3 className="text-gray-700 font-bold">h-index</h3>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {stats.hIndex}
+                    </p>
+                  </div>
                 </div>
-                <div className="bg-white p-4 rounded-lg shadow">
-                  <h3 className="text-gray-700 font-semibold">i10-index</h3>
-                  <p className="text-2xl font-bold text-blue-600">
-                    {stats.i10Index}
-                  </p>
+
+                <div className="bg-white p-4 rounded-lg shadow flex items-center">
+                  <div className="mr-4">
+                    {/* Icon for i10-index */}
+                    <I10IndexIcon className="w-12 h-12 text-purple-500" />
+                  </div>
+                  <div>
+                    <h3 className="text-gray-700 font-bold">i10-index</h3>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {stats.i10Index}
+                    </p>
+                  </div>
                 </div>
               </div>
 
               {/* Charts Section */}
               <div className="grid grid-cols-2 gap-6">
-                {/* Pie Chart for Publication Types */}
+                {/* Publications by Type */}
                 <div className="bg-white p-6 rounded-lg shadow">
                   <h2 className="text-xl font-bold mb-4">
                     Publications by Type
                   </h2>
-                  <ResponsiveContainer width="100%" height={300}>
+                  <ResponsiveContainer width="100%" height={250}>
                     <PieChart>
                       <Pie
                         data={chartData.typesData}
@@ -429,6 +587,7 @@ const FacultyDashboard = ({ faculty, onLogout }) => {
                         cy="50%"
                         outerRadius={100}
                         fill="#8884d8"
+                        label
                       >
                         {chartData.typesData.map((entry, index) => (
                           <Cell
@@ -443,12 +602,12 @@ const FacultyDashboard = ({ faculty, onLogout }) => {
                   </ResponsiveContainer>
                 </div>
 
-                {/* Bar Chart for Publications over Years */}
+                {/* Publications over Years */}
                 <div className="bg-white p-6 rounded-lg shadow">
                   <h2 className="text-xl font-bold mb-4">
                     Publications over Years
                   </h2>
-                  <ResponsiveContainer width="100%" height={300}>
+                  <ResponsiveContainer width="100%" height={250}>
                     <BarChart data={chartData.yearsData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="year" />
@@ -464,16 +623,29 @@ const FacultyDashboard = ({ faculty, onLogout }) => {
                   </ResponsiveContainer>
                 </div>
 
-                {/* Bar Chart for Publications by Journal */}
+                {/* Publications by Journal */}
                 <div className="bg-white p-6 rounded-lg shadow col-span-2">
                   <h2 className="text-xl font-bold mb-4">
                     Publications by Journal
                   </h2>
-                  <ResponsiveContainer width="100%" height={400}>
-                    <BarChart data={chartData.journalsData} layout="vertical">
+                  <ResponsiveContainer width="100%" height={700}>
+                    <BarChart
+                      data={chartData.journalsData}
+                      layout="vertical"
+                      margin={{ top: 20, right: 30, left: 30, bottom: 20 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis type="number" allowDecimals={false} />
-                      <YAxis dataKey="name" type="category" width={150} />
+                      <YAxis
+                        dataKey="name"
+                        type="category"
+                        width={150}
+                        tick={{
+                          fontSize: 14,
+                          angle: 0,
+                          dx: -10,
+                        }}
+                      />
                       <Tooltip />
                       <Legend />
                       <Bar
@@ -518,7 +690,9 @@ const FacultyDashboard = ({ faculty, onLogout }) => {
                     Loading publications...
                   </div>
                 ) : error ? (
-                  <div className="text-red-600 text-center py-4">{error}</div>
+                  <div className="text-red-600 text-center py-4">
+                    {error}
+                  </div>
                 ) : filteredPublications.length === 0 ? (
                   <div className="text-gray-500 text-center py-4">
                     No publications found
@@ -839,15 +1013,116 @@ const FacultyDashboard = ({ faculty, onLogout }) => {
             </>
           )}
 
-          {activeSection === "settings" && (
-            <>
-              {/* Settings Page */}
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h2 className="text-xl font-bold mb-4">Settings</h2>
-                {/* Settings content goes here */}
-              </div>
-            </>
+          {/* Edit Profile Modal */}
+          {showEditProfile && (
+  <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center">
+    <div className="bg-white p-6 rounded-lg shadow w-1/3">
+      <h2 className="text-xl font-bold mb-4">Edit Profile</h2>
+      <form onSubmit={handleProfileUpdate}>
+        <div className="mb-4">
+          <label className="block text-gray-700">Profile Photo</label>
+          <input
+            type="file"
+            onChange={handleProfilePhotoChange}
+            className="w-full p-2 border rounded"
+          />
+          {profileData.profilePhoto && (
+            <img
+              src={profileData.profilePhoto}
+              alt="Profile Preview"
+              className="w-24 h-24 rounded-full mt-2"
+            />
           )}
+        </div>
+        <div className="mb-4">
+          <label className="block text-gray-700">First Name</label>
+          <input
+            type="text"
+            value={profileData.firstName}
+            onChange={(e) =>
+              setProfileData({
+                ...profileData,
+                firstName: e.target.value,
+              })
+            }
+            className="w-full p-2 border rounded"
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block text-gray-700">Last Name</label>
+          <input
+            type="text"
+            value={profileData.lastName}
+            onChange={(e) =>
+              setProfileData({
+                ...profileData,
+                lastName: e.target.value,
+              })
+            }
+            className="w-full p-2 border rounded"
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block text-gray-700">Email</label>
+          <input
+            type="email"
+            value={profileData.email}
+            onChange={(e) =>
+              setProfileData({
+                ...profileData,
+                email: e.target.value,
+              })
+            }
+            className="w-full p-2 border rounded"
+          />
+        </div>
+        <button
+          type="submit"
+          className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
+        >
+          Save Changes
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowEditProfile(false)}
+          className="w-full bg-gray-600 text-white p-2 rounded mt-2 hover:bg-gray-700"
+        >
+          Cancel
+        </button>
+      </form>
+    </div>
+  </div>
+)}
+
+{/* Profile URL Modal */}
+{showURLModal && (
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
+            <h2 className="text-xl font-bold mb-4">Your Public Profile URL</h2>
+            <input
+              type="text"
+              value={profileURL}
+              readOnly
+              className="w-full p-2 border rounded mb-4"
+            />
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(profileURL);
+                alert('URL copied to clipboard!');
+              }}
+              className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 mb-2"
+            >
+              Copy URL
+            </button>
+            <button
+              onClick={() => setShowURLModal(false)}
+              className="w-full bg-gray-600 text-white p-2 rounded hover:bg-gray-700"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
         </main>
       </div>
     </div>

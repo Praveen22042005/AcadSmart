@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 
@@ -7,6 +7,16 @@ const Login = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [showRegister, setShowRegister] = useState(false);
   const [credentials, setCredentials] = useState(null);
+
+  useEffect(() => {
+    // Retrieve stored credentials from localStorage
+    const storedFacultyId = localStorage.getItem('facultyId');
+    const storedPassword = localStorage.getItem('password');
+    if (storedFacultyId && storedPassword) {
+      setFacultyId(storedFacultyId);
+      setPassword(storedPassword);
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

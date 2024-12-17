@@ -37,7 +37,7 @@ router.post('/login', async (req, res) => {
     const { facultyId, password } = req.body;
     
     // Find faculty by ID
-    const faculty = await Faculty.findOne({ facultyId });
+    const faculty = await Faculty.findOne({ facultyId: req.body.facultyId });
     if (!faculty) {
       return res.status(400).json({ 
         success: false, 
@@ -54,9 +54,12 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    res.json({ 
+    res.json({
       success: true,
-      faculty
+      faculty: {
+        ...faculty._doc,
+        profilePhoto: faculty.profilePhoto || defaultAvatar
+      }
     });
   } catch (error) {
     res.status(400).json({ 

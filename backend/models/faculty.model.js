@@ -9,8 +9,12 @@ const facultySchema = new Schema({
   lastName: { type: String },
   fullName: { type: String },
   email: { type: String },
-  googleScholarLink: { type: String },
+  profilePhoto: { 
+    type: String,
+    default: 'default-avatar.png'
+  },
   isProfileComplete: { type: Boolean, default: false },
+  publicProfileToken: { type: String, unique: true, sparse: true }, // New field
 });
 
 // Pre-save middleware to set fullName

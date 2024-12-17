@@ -3,12 +3,14 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const facultyRouter = require('./routes/faculty'); // Keep this declaration
 const app = express();
 const port = process.env.PORT || 4000;
 
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
+app.use('/faculty', facultyRouter);
 
 // MongoDB connection
 mongoose.connect('mongodb://localhost:27017/university-publications', {
@@ -27,12 +29,11 @@ app.get('/', (req, res) => {
 
 // Routes
 const authRouter = require('./routes/auth');
-const publicationsRouter = require('./routes/publication'); // Ensure this is declared only once
-const facultyRouter = require('./routes/faculty');
+const publicationsRouter = require('./routes/publication');
 
 app.use('/auth', authRouter);
 app.use('/publications', publicationsRouter);
-app.use('/faculty', facultyRouter);
+// Remove the duplicate declaration and usage of facultyRouter here
 
 app.listen(port, () => {
   console.log(`Server is running on port: ${port}`);
