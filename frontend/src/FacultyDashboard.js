@@ -1108,7 +1108,6 @@ useEffect(() => {
             <button
               onClick={() => {
                 navigator.clipboard.writeText(profileURL);
-                alert('URL copied to clipboard!');
               }}
               className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 mb-2"
             >
