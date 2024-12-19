@@ -123,17 +123,6 @@ AcadSmart is a comprehensive academic publication management system that revolut
 - Easy access to academic work
 - Impact demonstration
 
-## Screenshots
-(Replace placeholder images with actual interface screenshots)
-1. Main Dashboard View
-2. Faculty Profile Interface
-3. Publication Management
-4. Analytics Dashboard
-5. University Search Interface
-6. Public Profile View
-7. Research Visualizations
-8. Institution Analytics
-
 ---
 
 I developed this web application with focus on enhancing academic research visibility and management efficiency.
