@@ -8,11 +8,11 @@ AcadSmart is a comprehensive academic publication management system that revolut
 ## Key Features & Impact
 
 ### Faculty Registration
-(![register-faculty](https://github.com/user-attachments/assets/5320be61-884a-4707-91ed-8ca025604bd8)
+![register-faculty](https://github.com/user-attachments/assets/5320be61-884a-4707-91ed-8ca025604bd8)
 
 
 ### Faculty Login
-(![faculty-login](https://github.com/user-attachments/assets/71e39371-6d7d-4b18-afec-7649a837a381)
+![faculty-login](https://github.com/user-attachments/assets/71e39371-6d7d-4b18-afec-7649a837a381)
 
 #### Publication Management
 - **Automated Publication Fetching**
@@ -28,7 +28,7 @@ AcadSmart is a comprehensive academic publication management system that revolut
   - Maintain accurate research portfolio
 
 #### Analytics Dashboard
-(![faculty-dashboard](https://github.com/user-attachments/assets/7b517527-0d9f-400e-a241-1034bc20760b)
+![faculty-dashboard](https://github.com/user-attachments/assets/7b517527-0d9f-400e-a241-1034bc20760b)
 - **Research Metrics**
   - Total publication count
   - Citation statistics
@@ -42,7 +42,7 @@ AcadSmart is a comprehensive academic publication management system that revolut
   - Citation impact charts
 
 #### Profile Management
-(![faculty-custom-url](https://github.com/user-attachments/assets/7424fbaf-659a-4290-bb90-22cdfe6e7857)
+![faculty-custom-url](https://github.com/user-attachments/assets/7424fbaf-659a-4290-bb90-22cdfe6e7857)
 - **Public URL Generation**
   - Shareable profile links
   - Public access to research data
@@ -50,7 +50,7 @@ AcadSmart is a comprehensive academic publication management system that revolut
   - Enhanced research visibility
 
 ### University Dashboard
-(![University-Dashboard](https://github.com/user-attachments/assets/627b6888-a7c5-4a2f-87a1-5e0f1b6a3f89)
+![University-Dashboard](https://github.com/user-attachments/assets/627b6888-a7c5-4a2f-87a1-5e0f1b6a3f89)
 
 #### Faculty Directory
 - **Smart Search**
@@ -60,7 +60,7 @@ AcadSmart is a comprehensive academic publication management system that revolut
   - Quick access to faculty profiles
 
 ### Public Profile View
-(![faculty-custom-url](https://github.com/user-attachments/assets/48f45292-135d-4447-90d6-2ac63ae7c46d)
+![faculty-custom-url](https://github.com/user-attachments/assets/48f45292-135d-4447-90d6-2ac63ae7c46d)
 
 #### Publication Showcase
 - **Research Portfolio**
