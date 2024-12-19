@@ -3,7 +3,7 @@
 ## Project Overview
 AcadSmart is a comprehensive academic publication management system that revolutionizes how universities track and showcase their faculty's research contributions. The platform features three powerful interfaces: Faculty Dashboard, University Dashboard, and Public Profiles.
 
-![Main Dashboard](![main-dashboard](https://github.com/user-attachments/assets/3534e517-7356-4a57-b781-021a466b1555))
+![main-dashboard](https://github.com/user-attachments/assets/3534e517-7356-4a57-b781-021a466b1555)
 
 ## Key Features & Impact
 
